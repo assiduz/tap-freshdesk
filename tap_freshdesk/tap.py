@@ -73,7 +73,7 @@ class Tapfreshdesk(Tap):
         """
         return [
             streams.AgentsStream(self),
-            # streams.CompaniesStream(self),
+            streams.CompaniesStream(self),
             # streams.TicketFieldsStream(self),
             # streams.GroupsStream(self),
             # streams.ContactsStream(self),
