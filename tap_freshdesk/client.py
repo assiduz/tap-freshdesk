@@ -181,7 +181,10 @@ class FreshdeskStream(RESTStream):
         """
         When 429 thrown, header contains the time to wait before
         the next call is allowed, rather than use exponential backoff"""
-        return int(exception.response.headers["Retry-After"])
+        print("------------------------------------")
+        print(int(exception.response.headers["Retry-After"]) + 60)
+        print("------------------------------------")
+        return int(exception.response.headers["Retry-After"] + 60)
 
     def backoff_jitter(self, value: float) -> float:
         return value
