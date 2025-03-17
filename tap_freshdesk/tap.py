@@ -31,8 +31,8 @@ class Tapfreshdesk(Tap):
         ),
         th.Property(
             "start_date",
-            required=True,
             th.DateTimeType,
+            required=True,
             description="The earliest record date to sync in ISO 'YYYY-MM-DD' format",
         ),
         th.Property(
@@ -73,19 +73,16 @@ class Tapfreshdesk(Tap):
         """
         return [
             streams.AgentsStream(self),
-            streams.CompaniesStream(self),
-            streams.TicketFieldsStream(self),
-            streams.GroupsStream(self),
-            streams.ContactsStream(self),
-            streams.TicketsAbridgedStream(tap=self, ticket_ids=_ticket_ids),
-            streams.TicketsDetailStream(tap=self, ticket_ids=_ticket_ids),
-            streams.ConversationsStream(self),
-            streams.EmailConfigsStream(self),
-            streams.SlaPoliciesStream(self),
+            # streams.CompaniesStream(self),
+            # streams.TicketFieldsStream(self),
+            # streams.GroupsStream(self),
+            # streams.ContactsStream(self),
+            # streams.TicketsAbridgedStream(tap=self, ticket_ids=_ticket_ids),
+            # streams.TicketsDetailStream(tap=self, ticket_ids=_ticket_ids),
+            # streams.ConversationsStream(self),
+            # streams.EmailConfigsStream(self),
+            # streams.SlaPoliciesStream(self),
         ]
-
-
-
 
 if __name__ == "__main__":
     Tapfreshdesk(config=config).cli()
