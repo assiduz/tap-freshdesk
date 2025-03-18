@@ -185,15 +185,11 @@ class FreshdeskStream(RESTStream):
         the next call is allowed, rather than use exponential backoff"""
         # return int(exception.response.headers["Retry-After"] + 60)
         retry_after = exception.response.headers.get("Retry-After")
-    
-        # Logging the rate limit information from the headers
-        total_calls = exception.response.headers.get("X-Ratelimit-Total")
-        remaining_calls = exception.response.headers.get("X-Ratelimit-Remaining")
-        used_calls = exception.response.headers.get("X-Ratelimit-Used-CurrentRequest")
-        
+
         # Print or log the rate limit information
         logging.info("-------------------------------------------")
-        logging.info(f"Rate Limit - Total: {total_calls}, Remaining: {remaining_calls}, Used: {used_calls}")
+        for key, value in exception.response.headers.items():
+            logging.info(f"{key}: {value}")
         logging.info("-------------------------------------------")
         
         if retry_after:
@@ -212,7 +208,7 @@ class FreshdeskStream(RESTStream):
                 wait_time = max(wait_time, 0)
             
             # Add a small buffer to avoid racing (optional)
-            wait_time += 5
+            wait_time += 120
             return wait_time
         else:
             # Fallback: if no Retry-After header is provided, wait for 60 seconds by default
