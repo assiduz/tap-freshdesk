@@ -184,38 +184,44 @@ class FreshdeskStream(RESTStream):
         When 429 thrown, header contains the time to wait before
         the next call is allowed, rather than use exponential backoff"""
         # return int(exception.response.headers["Retry-After"] + 60)
-        retry_after = exception.response.headers.get("Retry-After")
 
-        # Print or log the rate limit information
-        logging.info("-------------------------------------------")
-        for key, value in exception.response.headers.items():
+        # Access headers from the exception response
+        headers = exception.response.headers
+        logging.info("-----------------------------")
+        # Print headers for debugging (optional)
+        logging.info("Response Headers:")
+        for key, value in headers.items():
             logging.info(f"{key}: {value}")
-        logging.info("-------------------------------------------")
+        logging.info("-----------------------------")
         
-        if retry_after:
-            try:
-                # Handle Retry-After as a number of seconds
-                wait_time = int(retry_after)
-                logging.info("-------------------------------------------")
-                logging.info(f"Rate limit exceeded. Retrying in {wait_time} seconds.")
-                logging.info("-------------------------------------------")
-            except ValueError:
-                # If Retry-After is a timestamp, calculate the wait time
-                timestamp = int(retry_after)
-                wait_time = timestamp - int(time.time())
-                
-                # If the computed time is less than 0 (for some reason), retry immediately
-                wait_time = max(wait_time, 0)
+        # Maximum retry attempts (you can change this number)
+        max_retries = 5
+        retry_attempt = 0
+
+        while retry_attempt < max_retries:
+            retry_attempt += 1
             
-            # Add a small buffer to avoid racing (optional)
-            wait_time += 120
-            return wait_time
-        else:
-            # Fallback: if no Retry-After header is provided, wait for 60 seconds by default
-            logging.info("-------------------------------------------")
-            logging.warning("Retry-After header not found. Retrying in 60 seconds.")
-            logging.info("-------------------------------------------")
-            return 60
+            retry_after = headers.get("Retry-After")
+            if retry_after:
+                # Directly assume Retry-After is in seconds as per the doc
+                wait_time = int(retry_after)
+                logging.info("-----------------------------")
+                logging.info(f"Attempt {retry_attempt}: Rate limit exceeded. Retrying in {wait_time} seconds.")
+                time.sleep(wait_time)  # Sleep for the specified number of seconds
+                logging.info("-----------------------------")
+                break  # Exit loop if Retry-After is valid, and wait time is applied
+            else:
+                # Fallback: if no Retry-After header is provided, wait for 60 seconds by default
+                logging.warning(f"Attempt {retry_attempt}: Retry-After header not found. Retrying in 60 seconds.")
+                time.sleep(60)  # Default backoff if no Retry-After header is found
+                break  # Exit loop after fallback sleep
+
+            # If maximum retries have been reached, log an error and stop retrying
+        if retry_attempt == max_retries:
+            logging.info("-----------------------------")
+            logging.error(f"Max retry attempts ({max_retries}) reached. Could not resolve rate limiting.")
+            logging.info("-----------------------------")
+            # raise Exception(f"Rate limit exceeded after {max_retries} retries.")
 
     def backoff_jitter(self, value: float) -> float:
         return value
