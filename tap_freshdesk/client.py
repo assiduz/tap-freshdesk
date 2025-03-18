@@ -184,7 +184,8 @@ class FreshdeskStream(RESTStream):
         print("------------------------------------")
         print(int(exception.response.headers["Retry-After"]) + 60)
         print("------------------------------------")
-        return int(exception.response.headers["Retry-After"] + 60)
+        # return int(exception.response.headers["Retry-After"] + 60)
+        return 60
 
     def backoff_jitter(self, value: float) -> float:
         return value
