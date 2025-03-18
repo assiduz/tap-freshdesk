@@ -222,6 +222,7 @@ class FreshdeskStream(RESTStream):
             logging.error(f"Max retry attempts ({max_retries}) reached. Could not resolve rate limiting.")
             logging.info("-----------------------------")
             # raise Exception(f"Rate limit exceeded after {max_retries} retries.")
+        return 0
 
     def backoff_jitter(self, value: float) -> float:
         return value
