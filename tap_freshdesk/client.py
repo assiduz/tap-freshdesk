@@ -175,54 +175,54 @@ class FreshdeskStream(RESTStream):
     def get_new_paginator(self) -> SinglePagePaginator:
         return SinglePagePaginator()
 
-    def backoff_wait_generator(self) -> Generator[float, None, None]:
-        return self.backoff_runtime(value=self._wait_for)
+    # def backoff_wait_generator(self) -> Generator[float, None, None]:
+    #     return self.backoff_runtime(value=self._wait_for)
 
-    @staticmethod
-    def _wait_for(exception) -> int:
-        """
-        When 429 thrown, header contains the time to wait before
-        the next call is allowed, rather than use exponential backoff"""
-        # return int(exception.response.headers["Retry-After"] + 60)
+    # @staticmethod
+    # def _wait_for(exception) -> int:
+    #     """
+    #     When 429 thrown, header contains the time to wait before
+    #     the next call is allowed, rather than use exponential backoff"""
+    #     # return int(exception.response.headers["Retry-After"] + 60)
 
-        # Access headers from the exception response
-        headers = exception.response.headers
-        logging.info("-----------------------------")
-        # Print headers for debugging (optional)
-        logging.info("Response Headers:")
-        for key, value in headers.items():
-            logging.info(f"{key}: {value}")
-        logging.info("-----------------------------")
+    #     # Access headers from the exception response
+    #     headers = exception.response.headers
+    #     logging.info("-----------------------------")
+    #     # Print headers for debugging (optional)
+    #     logging.info("Response Headers:")
+    #     for key, value in headers.items():
+    #         logging.info(f"{key}: {value}")
+    #     logging.info("-----------------------------")
         
-        # Maximum retry attempts (you can change this number)
-        max_retries = 5
-        retry_attempt = 0
+    #     # Maximum retry attempts (you can change this number)
+    #     max_retries = 5
+    #     retry_attempt = 0
 
-        while retry_attempt < max_retries:
-            retry_attempt += 1
+    #     while retry_attempt < max_retries:
+    #         retry_attempt += 1
             
-            retry_after = headers.get("Retry-After")
-            if retry_after:
-                # Directly assume Retry-After is in seconds as per the doc
-                wait_time = int(retry_after)
-                logging.info("-----------------------------")
-                logging.info(f"Attempt {retry_attempt}: Rate limit exceeded. Retrying in {wait_time} seconds.")
-                time.sleep(wait_time)  # Sleep for the specified number of seconds
-                logging.info("-----------------------------")
-                break  # Exit loop if Retry-After is valid, and wait time is applied
-            else:
-                # Fallback: if no Retry-After header is provided, wait for 60 seconds by default
-                logging.warning(f"Attempt {retry_attempt}: Retry-After header not found. Retrying in 60 seconds.")
-                time.sleep(60)  # Default backoff if no Retry-After header is found
-                break  # Exit loop after fallback sleep
+    #         retry_after = headers.get("Retry-After")
+    #         if retry_after:
+    #             # Directly assume Retry-After is in seconds as per the doc
+    #             wait_time = int(retry_after)
+    #             logging.info("-----------------------------")
+    #             logging.info(f"Attempt {retry_attempt}: Rate limit exceeded. Retrying in {wait_time} seconds.")
+    #             time.sleep(wait_time)  # Sleep for the specified number of seconds
+    #             logging.info("-----------------------------")
+    #             break  # Exit loop if Retry-After is valid, and wait time is applied
+    #         else:
+    #             # Fallback: if no Retry-After header is provided, wait for 60 seconds by default
+    #             logging.warning(f"Attempt {retry_attempt}: Retry-After header not found. Retrying in 60 seconds.")
+    #             time.sleep(60)  # Default backoff if no Retry-After header is found
+    #             break  # Exit loop after fallback sleep
 
-            # If maximum retries have been reached, log an error and stop retrying
-        if retry_attempt == max_retries:
-            logging.info("-----------------------------")
-            logging.error(f"Max retry attempts ({max_retries}) reached. Could not resolve rate limiting.")
-            logging.info("-----------------------------")
-            # raise Exception(f"Rate limit exceeded after {max_retries} retries.")
-        return 0
+    #         # If maximum retries have been reached, log an error and stop retrying
+    #     if retry_attempt == max_retries:
+    #         logging.info("-----------------------------")
+    #         logging.error(f"Max retry attempts ({max_retries}) reached. Could not resolve rate limiting.")
+    #         logging.info("-----------------------------")
+    #         # raise Exception(f"Rate limit exceeded after {max_retries} retries.")
+    #     return 0
 
     def backoff_jitter(self, value: float) -> float:
         return value
@@ -250,6 +250,9 @@ class FreshdeskStream(RESTStream):
 
         error_details = []
         if response.status_code >= 400:
+            logging.info("=====================================")
+            logging.info(f"response code is {response.status_code}")
+            logging.info("=====================================")
             print(f"Error Response: {response.status_code} {response.reason}")
             try:
                 error_data = response.json()
