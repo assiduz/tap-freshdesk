@@ -227,50 +227,50 @@ class FreshdeskStream(RESTStream):
     def backoff_jitter(self, value: float) -> float:
         return value
 
-    # Handling error, overriding this method over RESTStream's Class
-    def response_error_message(self, response: requests.Response) -> str:
-        """Build error message for invalid http statuses.
+    # # Handling error, overriding this method over RESTStream's Class
+    # def response_error_message(self, response: requests.Response) -> str:
+    #     """Build error message for invalid http statuses.
 
-        WARNING - Override this method when the URL path may contain secrets or PII
+    #     WARNING - Override this method when the URL path may contain secrets or PII
 
-        Args:
-            response: A :class:`requests.Response` object.
+    #     Args:
+    #         response: A :class:`requests.Response` object.
 
-        Returns:
-            str: The error message
-        """
-        full_path = urlparse(response.url).path or self.path
-        error_type = (
-            "Client"
-            if HTTPStatus.BAD_REQUEST
-            <= response.status_code
-            < HTTPStatus.INTERNAL_SERVER_ERROR
-            else "Server"
-        )
+    #     Returns:
+    #         str: The error message
+    #     """
+    #     full_path = urlparse(response.url).path or self.path
+    #     error_type = (
+    #         "Client"
+    #         if HTTPStatus.BAD_REQUEST
+    #         <= response.status_code
+    #         < HTTPStatus.INTERNAL_SERVER_ERROR
+    #         else "Server"
+    #     )
 
-        error_details = []
-        if response.status_code >= 400:
-            logging.info("=====================================")
-            logging.info(f"response code is {response.status_code}")
-            logging.info("=====================================")
-            print(f"Error Response: {response.status_code} {response.reason}")
-            try:
-                error_data = response.json()
-                errors = error_data.get("errors")
-                for index, error in enumerate(errors):
-                    message = error.get("message", "Unknown")
-                    field = error.get("field", "Unknown")
-                    error_details.append(
-                        f"Error {index + 1}: Message - {message}, Field - {field}"
-                    )
-            except requests.exceptions.JSONDecodeError:
-                return "Error: Unable to parse JSON error response"
+    #     error_details = []
+    #     if response.status_code >= 400:
+    #         if response.status_code == 429:
+    #             time.sleep(60)
+    #             return {}
+                
+    #         try:
+    #             error_data = response.json()
+    #             errors = error_data.get("errors")
+    #             for index, error in enumerate(errors):
+    #                 message = error.get("message", "Unknown")
+    #                 field = error.get("field", "Unknown")
+    #                 error_details.append(
+    #                     f"Error {index + 1}: Message - {message}, Field - {field}"
+    #                 )
+    #         except requests.exceptions.JSONDecodeError:
+    #             return "Error: Unable to parse JSON error response"
 
-        return (
-            f"{response.status_code} {error_type} Error: "
-            f"{response.reason} for path: {full_path}. "
-            f"Error via function response_error_message : {'. '.join(error_details)}."
-        )
+    #     return (
+    #         f"{response.status_code} {error_type} Error: "
+    #         f"{response.reason} for path: {full_path}. "
+    #         f"Error via function response_error_message : {'. '.join(error_details)}."
+    #     )
 
 
 class FreshdeskPaginator(BasePageNumberPaginator):
