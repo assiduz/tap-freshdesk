@@ -128,24 +128,6 @@ class FreshdeskStream(RESTStream):
                 params["include"] = ",".join(embed_fields)
         return params
 
-    def prepare_request_payload(
-        self,
-        context: dict | None,
-        next_page_token: Any | None,
-    ) -> dict | None:
-        """Prepare the data payload for the REST API request.
-
-        By default, no payload will be sent (return None).
-
-        Args:
-            context: The stream context.
-            next_page_token: The next page index or value.
-
-        Returns:
-            A dictionary with the JSON body for a POST requests.
-        """
-        # TODO: Delete this method if no payload is required. (Most REST APIs.)
-        return None
 
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         """Parse the response and return an iterator of result records.
@@ -159,119 +141,12 @@ class FreshdeskStream(RESTStream):
         # TODO: Parse response body and return a set of records.
         yield from extract_jsonpath(self.records_jsonpath, input=response.json())
 
-    def post_process(self, row: dict, context: dict | None = None) -> dict | None:
-        """As needed, append or transform raw data to match expected structure.
-
-        Args:
-            row: An individual record from the stream.
-            context: The stream context.
-
-        Returns:
-            The updated record dictionary, or ``None`` to skip the record.
-        """
-        # TODO: Delete this method if not needed.
-        return row
-
     def get_new_paginator(self) -> SinglePagePaginator:
         return SinglePagePaginator()
 
-    # def backoff_wait_generator(self) -> Generator[float, None, None]:
-    #     return self.backoff_runtime(value=self._wait_for)
-
-    # @staticmethod
-    # def _wait_for(exception) -> int:
-    #     """
-    #     When 429 thrown, header contains the time to wait before
-    #     the next call is allowed, rather than use exponential backoff"""
-    #     # return int(exception.response.headers["Retry-After"] + 60)
-
-    #     # Access headers from the exception response
-    #     headers = exception.response.headers
-    #     logging.info("-----------------------------")
-    #     # Print headers for debugging (optional)
-    #     logging.info("Response Headers:")
-    #     for key, value in headers.items():
-    #         logging.info(f"{key}: {value}")
-    #     logging.info("-----------------------------")
-        
-    #     # Maximum retry attempts (you can change this number)
-    #     max_retries = 5
-    #     retry_attempt = 0
-
-    #     while retry_attempt < max_retries:
-    #         retry_attempt += 1
-            
-    #         retry_after = headers.get("Retry-After")
-    #         if retry_after:
-    #             # Directly assume Retry-After is in seconds as per the doc
-    #             wait_time = int(retry_after)
-    #             logging.info("-----------------------------")
-    #             logging.info(f"Attempt {retry_attempt}: Rate limit exceeded. Retrying in {wait_time} seconds.")
-    #             time.sleep(wait_time)  # Sleep for the specified number of seconds
-    #             logging.info("-----------------------------")
-    #             break  # Exit loop if Retry-After is valid, and wait time is applied
-    #         else:
-    #             # Fallback: if no Retry-After header is provided, wait for 60 seconds by default
-    #             logging.warning(f"Attempt {retry_attempt}: Retry-After header not found. Retrying in 60 seconds.")
-    #             time.sleep(60)  # Default backoff if no Retry-After header is found
-    #             break  # Exit loop after fallback sleep
-
-    #         # If maximum retries have been reached, log an error and stop retrying
-    #     if retry_attempt == max_retries:
-    #         logging.info("-----------------------------")
-    #         logging.error(f"Max retry attempts ({max_retries}) reached. Could not resolve rate limiting.")
-    #         logging.info("-----------------------------")
-    #         # raise Exception(f"Rate limit exceeded after {max_retries} retries.")
-    #     return 0
 
     def backoff_jitter(self, value: float) -> float:
         return value
-
-    # # Handling error, overriding this method over RESTStream's Class
-    # def response_error_message(self, response: requests.Response) -> str:
-    #     """Build error message for invalid http statuses.
-
-    #     WARNING - Override this method when the URL path may contain secrets or PII
-
-    #     Args:
-    #         response: A :class:`requests.Response` object.
-
-    #     Returns:
-    #         str: The error message
-    #     """
-    #     full_path = urlparse(response.url).path or self.path
-    #     error_type = (
-    #         "Client"
-    #         if HTTPStatus.BAD_REQUEST
-    #         <= response.status_code
-    #         < HTTPStatus.INTERNAL_SERVER_ERROR
-    #         else "Server"
-    #     )
-
-    #     error_details = []
-    #     if response.status_code >= 400:
-    #         if response.status_code == 429:
-    #             time.sleep(60)
-    #             return {}
-                
-    #         try:
-    #             error_data = response.json()
-    #             errors = error_data.get("errors")
-    #             for index, error in enumerate(errors):
-    #                 message = error.get("message", "Unknown")
-    #                 field = error.get("field", "Unknown")
-    #                 error_details.append(
-    #                     f"Error {index + 1}: Message - {message}, Field - {field}"
-    #                 )
-    #         except requests.exceptions.JSONDecodeError:
-    #             return "Error: Unable to parse JSON error response"
-
-    #     return (
-    #         f"{response.status_code} {error_type} Error: "
-    #         f"{response.reason} for path: {full_path}. "
-    #         f"Error via function response_error_message : {'. '.join(error_details)}."
-    #     )
-
 
 class FreshdeskPaginator(BasePageNumberPaginator):
 

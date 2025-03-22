@@ -72,16 +72,16 @@ class Tapfreshdesk(Tap):
             A list of discovered streams.
         """
         return [
-            # streams.AgentsStream(self),  # done
-            # streams.CompaniesStream(self), # done
-            # streams.TicketFieldsStream(self), # done
-            # streams.GroupsStream(self), # done
-            # streams.ContactsStream(self), # done
+            streams.AgentsStream(self), 
+            streams.CompaniesStream(self),
+            streams.TicketFieldsStream(self),
+            streams.GroupsStream(self),
+            streams.ContactsStream(self),
             streams.TicketsAbridgedStream(tap=self, ticket_ids=_ticket_ids),
             streams.TicketsDetailStream(tap=self, ticket_ids=_ticket_ids),
             streams.ConversationsStream(self),
-            # streams.EmailConfigsStream(self), # done
-            # streams.SlaPoliciesStream(self), # done
+            streams.EmailConfigsStream(self),
+            streams.SlaPoliciesStream(self),
         ]
 
 if __name__ == "__main__":

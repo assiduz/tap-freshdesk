@@ -39,7 +39,7 @@ class SlaPoliciesStream(PagedFreshdeskStream):
     name = "sla_policies"
 
 class TicketsAbridgedStream(PagedFreshdeskStream):
-    name = "tickets_abridged"
+    name = "tickets"
     replication_key = 'updated_at'
 
     def __init__(self, *args, **kwargs):
