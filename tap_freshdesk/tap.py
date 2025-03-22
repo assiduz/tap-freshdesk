@@ -72,7 +72,7 @@ class Tapfreshdesk(Tap):
             A list of discovered streams.
         """
         return [
-            streams.AgentsStream(self), 
+            streams.AgentsStream(self),
             streams.CompaniesStream(self),
             streams.TicketFieldsStream(self),
             streams.GroupsStream(self),
