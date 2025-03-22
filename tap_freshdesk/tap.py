@@ -31,8 +31,8 @@ class Tapfreshdesk(Tap):
         ),
         th.Property(
             "start_date",
-            required=True,
             th.DateTimeType,
+            required=True,
             description="The earliest record date to sync in ISO 'YYYY-MM-DD' format",
         ),
         th.Property(
@@ -83,9 +83,6 @@ class Tapfreshdesk(Tap):
             streams.EmailConfigsStream(self),
             streams.SlaPoliciesStream(self),
         ]
-
-
-
 
 if __name__ == "__main__":
     Tapfreshdesk(config=config).cli()

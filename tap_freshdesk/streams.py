@@ -15,22 +15,20 @@ SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
 class AgentsStream(PagedFreshdeskStream):
     name = "agents"
-    
 
 class CompaniesStream(PagedFreshdeskStream):
     name = "companies"
-
+    replication_key = 'updated_at'
 
 class TicketFieldsStream(FreshdeskStream):
     name = "ticket_fields"
 
-
 class GroupsStream(PagedFreshdeskStream):
     name = "groups"
 
-
 class ContactsStream(PagedFreshdeskStream):
     name = "contacts"
+    replication_key = 'updated_at'
 
 class EmailConfigsStream(PagedFreshdeskStream):
     name = "email_configs"
@@ -39,7 +37,7 @@ class SlaPoliciesStream(PagedFreshdeskStream):
     name = "sla_policies"
 
 class TicketsAbridgedStream(PagedFreshdeskStream):
-    name = "tickets_abridged"
+    name = "tickets"
     replication_key = 'updated_at'
 
     def __init__(self, *args, **kwargs):
