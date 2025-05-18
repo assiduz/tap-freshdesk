@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import copy
+import datetime
 
 from singer_sdk import typing as th  # JSON Schema typing helpers
 from singer_sdk import Tap, metrics
@@ -18,7 +19,7 @@ class AgentsStream(PagedFreshdeskStream):
 
 class CompaniesStream(PagedFreshdeskStream):
     name = "companies"
-    replication_key = 'updated_at'
+    replication_key = "updated_at"
 
 class TicketFieldsStream(FreshdeskStream):
     name = "ticket_fields"
@@ -30,40 +31,16 @@ class ContactsStream(PagedFreshdeskStream):
     name = "contacts"
     replication_key = 'updated_at'
 
-class EmailConfigsStream(PagedFreshdeskStream):
+class EmailConfigsStream(FreshdeskStream):
     name = "email_configs"
 
-class SlaPoliciesStream(PagedFreshdeskStream):
+class SlaPoliciesStream(FreshdeskStream):
     name = "sla_policies"
 
-class TicketsAbridgedStream(PagedFreshdeskStream):
+class TicketsStream(PagedFreshdeskStream):
     name = "tickets"
     replication_key = 'updated_at'
 
-    def __init__(self, *args, **kwargs):
-        self.ticket_ids: set = kwargs.pop('ticket_ids')
-        super().__init__(*args, **kwargs)
-    
-    @property
-    def path(self) -> str:
-        return '/tickets'
-    
-    @property
-    def schema_filepath(self) -> Path | None:
-        return SCHEMAS_DIR / 'tickets.json'
-    
-    @property
-    def is_sorted(self) -> bool:
-        """Expect stream to be sorted.
-
-        When `True`, incremental streams will attempt to resume if unexpectedly
-        interrupted.
-
-        Returns:
-            `True` if stream is sorted. Defaults to `False`.
-        """
-        return True
-    
     def get_url_params(
         self,
         context: dict | None,
@@ -80,109 +57,165 @@ class TicketsAbridgedStream(PagedFreshdeskStream):
         """
         context = context or {}
         params = super().get_url_params(context, next_page_token)
-        params['per_page'] = 100
-        # Adding these parameters for sorting
-        params['order_type'] = "asc"
-        params['order_by'] = "updated_at"
-        if next_page_token: 
+        params["per_page"] = 100
+        if next_page_token:
             params["page"] = next_page_token
-        if 'updated_since' not in context:
-            params['updated_since'] = self.get_starting_timestamp(context)
+        if "updated_since" not in context:
+            updated_since = self.get_starting_timestamp(context)
+            if isinstance(updated_since, datetime.datetime):
+                # Convert to ISO 8601 string with 'Z' for UTC
+                updated_since = updated_since.strftime("%Y-%m-%dT%H:%M:%SZ")
+            params["updated_since"] = updated_since
+        embeds = self.config.get("embeds", {})
+        embed_fields = embeds.get("tickets", [])
+        if embed_fields:
+            params["include"] = ",".join(embed_fields)
         return params
+
+
+# class TicketsAbridgedStream(PagedFreshdeskStream):
+#     name = "tickets"
+#     replication_key = 'updated_at'
+
+#     def __init__(self, *args, **kwargs):
+#         self.ticket_ids: set = kwargs.pop('ticket_ids')
+#         super().__init__(*args, **kwargs)
     
-    def get_records(self, context: dict | None) -> Iterable[dict[str, Any]]:
-        context = context or {}
-        records = self.request_records(context=context)
-        for rec in records:
-            self.post_process(rec)
-            yield rec
-
-    def post_process(self, row: dict, context: dict | None = None) -> dict | None:
-        self.ticket_ids.add(row['id'])
-
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
-        """Return a context dictionary for child streams."""
-        return {
-            "ticket_id": record["id"],
-        }
-
-class TicketsDetailStream(FreshdeskStream):
-    name = 'tickets_detail'   # needs the z's to run AFTER ticket_summary
-
-    def __init__(self, *args, **kwargs):
-        self.ticket_ids: set = kwargs.pop('ticket_ids')
-        super().__init__(*args, **kwargs)
-
-    @property
-    def path(self) -> str:
-        return '/tickets'
+#     @property
+#     def path(self) -> str:
+#         return '/tickets'
     
-    @property
-    def schema_filepath(self) -> Path | None:
-        return SCHEMAS_DIR / 'tickets.json'
+#     @property
+#     def schema_filepath(self) -> Path | None:
+#         return SCHEMAS_DIR / 'tickets.json'
+    
+#     @property
+#     def is_sorted(self) -> bool:
+#         """Expect stream to be sorted.
 
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
-        """Return a context dictionary for child streams."""
-        return {
-            "ticket_id": record["id"],
-        }
+#         When `True`, incremental streams will attempt to resume if unexpectedly
+#         interrupted.
 
-    def get_url(self, context: dict | None) -> str:
-        url = "".join([self.url_base, self.path])
-        if 'ticket_id' in context:
-            ticket_id = context.pop('ticket_id')
-            url = url + f'/{ticket_id}'
-        vals = copy.copy(dict(self.config))
-        vals.update(context or {})
-        for k, v in vals.items():
-            search_text = "".join(["{", k, "}"])
-            if search_text in url:
-                url = url.replace(search_text, self._url_encode(v))
-        return url
+#         Returns:
+#             `True` if stream is sorted. Defaults to `False`.
+#         """
+#         return True
+    
+#     def get_url_params(
+#         self,
+#         context: dict | None,
+#         next_page_token: Any | None,
+#     ) -> dict[str, Any]:
+#         """Return a dictionary of values to be used in URL parameterization.
 
-    def request_records(self, context: dict | None) -> Iterable[dict]:
-        """Request records from REST endpoint(s), returning response records.
+#         Args:
+#             context: The stream context.
+#             next_page_token: The next page index or value.
 
-        If pagination is detected, pages will be recursed automatically.
+#         Returns:
+#             A dictionary of URL query parameters.
+#         """
+#         context = context or {}
+#         params = super().get_url_params(context, next_page_token)
+#         params['per_page'] = 100
+#         # Adding these parameters for sorting
+#         params['order_type'] = "asc"
+#         params['order_by'] = "updated_at"
+#         if next_page_token: 
+#             params["page"] = next_page_token
+#         if 'updated_since' not in context:
+#             params['updated_since'] = self.get_starting_timestamp(context)
+#         return params
+    
+#     def get_records(self, context: dict | None) -> Iterable[dict[str, Any]]:
+#         context = context or {}
+#         records = self.request_records(context=context)
+#         for rec in records:
+#             self.post_process(rec)
+#             yield rec
 
-        Args:
-            context: Stream partition or context dictionary.
+#     def post_process(self, row: dict, context: dict | None = None) -> dict | None:
+#         self.ticket_ids.add(row['id'])
 
-        Yields:
-            An item for every record in the response.
-        """
-        context = context or {}
+#     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+#         """Return a context dictionary for child streams."""
+#         return {
+#             "ticket_id": record["id"],
+#         }
 
-        for ticket_id in self.ticket_ids:
-            context['ticket_id'] = ticket_id
+# class TicketsDetailStream(FreshdeskStream):
+#     name = 'tickets_detail'   # needs the z's to run AFTER ticket_summary
 
-            paginator = self.get_new_paginator()
-            decorated_request = self.request_decorator(self._request)
+#     def __init__(self, *args, **kwargs):
+#         self.ticket_ids: set = kwargs.pop('ticket_ids')
+#         super().__init__(*args, **kwargs)
 
-            with metrics.http_request_counter(self.name, self.path) as request_counter:
-                request_counter.context = context
+#     @property
+#     def path(self) -> str:
+#         return '/tickets'
+    
+#     @property
+#     def schema_filepath(self) -> Path | None:
+#         return SCHEMAS_DIR / 'tickets.json'
 
-                while not paginator.finished:
-                    prepared_request = self.prepare_request(
-                        context,
-                        next_page_token=paginator.current_value,
-                    )
-                    resp = decorated_request(prepared_request, context)
-                    request_counter.increment()
-                    self.update_sync_costs(prepared_request, resp, context)
-                    yield from self.parse_response(resp)
+#     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+#         """Return a context dictionary for child streams."""
+#         return {
+#             "ticket_id": record["id"],
+#         }
 
-                    paginator.advance(resp)
+#     def get_url(self, context: dict | None) -> str:
+#         url = "".join([self.url_base, self.path])
+#         if 'ticket_id' in context:
+#             ticket_id = context.pop('ticket_id')
+#             url = url + f'/{ticket_id}'
+#         vals = copy.copy(dict(self.config))
+#         vals.update(context or {})
+#         for k, v in vals.items():
+#             search_text = "".join(["{", k, "}"])
+#             if search_text in url:
+#                 url = url.replace(search_text, self._url_encode(v))
+#         return url
 
-class ConversationsStream(PagedFreshdeskStream):
+#     def request_records(self, context: dict | None) -> Iterable[dict]:
+#         """Request records from REST endpoint(s), returning response records.
 
-    name = "conversations"
+#         If pagination is detected, pages will be recursed automatically.
 
-    # EpicIssues streams should be invoked once per parent epic:
-    parent_stream_type = TicketsDetailStream
-    ignore_parent_replication_keys = True
+#         Args:
+#             context: Stream partition or context dictionary.
 
-    # Path is auto-populated using parent context keys:
-    path = "/tickets/{ticket_id}/conversations"
+#         Yields:
+#             An item for every record in the response.
+#         """
+#         context = context or {}
 
-    state_partitioning_keys = []
+#         for ticket_id in self.ticket_ids:
+#             context['ticket_id'] = ticket_id
+
+#             paginator = self.get_new_paginator()
+#             decorated_request = self.request_decorator(self._request)
+
+#             with metrics.http_request_counter(self.name, self.path) as request_counter:
+#                 request_counter.context = context
+
+#                 while not paginator.finished:
+#                     prepared_request = self.prepare_request(
+#                         context,
+#                         next_page_token=paginator.current_value,
+#                     )
+#                     resp = decorated_request(prepared_request, context)
+#                     request_counter.increment()
+#                     self.update_sync_costs(prepared_request, resp, context)
+#                     yield from self.parse_response(resp)
+
+#                     paginator.advance(resp)
+
+# class ConversationsStream(PagedFreshdeskStream):
+#     name = "conversations"
+#     # EpicIssues streams should be invoked once per parent epic:
+#     parent_stream_type = TicketsDetailStream
+#     ignore_parent_replication_keys = True
+#     # Path is auto-populated using parent context keys:
+#     path = "/tickets/{ticket_id}/conversations"
+#     state_partitioning_keys = []
