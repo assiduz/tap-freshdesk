@@ -45,8 +45,8 @@ class Tapfreshdesk(Tap):
             "embeds",
             th.ObjectType(
                 th.Property(
-                    'tickets_detail', th.ArrayType(
-                        th.StringType(allowed_values=['requester', 'company', 'stats', 'sla_policy'])
+                    'tickets', th.ArrayType(
+                        th.StringType(allowed_values=['requester', 'stats', 'company', 'description'])
                         )
                 ),
             ),
@@ -77,9 +77,10 @@ class Tapfreshdesk(Tap):
             streams.TicketFieldsStream(self),
             streams.GroupsStream(self),
             streams.ContactsStream(self),
-            streams.TicketsAbridgedStream(tap=self, ticket_ids=_ticket_ids),
-            streams.TicketsDetailStream(tap=self, ticket_ids=_ticket_ids),
-            streams.ConversationsStream(self),
+            streams.TicketsStream(self),
+            # # streams.TicketsAbridgedStream(tap=self, ticket_ids=_ticket_ids),
+            # # streams.TicketsDetailStream(tap=self, ticket_ids=_ticket_ids),
+            # # streams.ConversationsStream(self),
             streams.EmailConfigsStream(self),
             streams.SlaPoliciesStream(self),
         ]

@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-import time
+import datetime
 from typing import Any, Callable, Iterable, TYPE_CHECKING, Generator
 
 import requests
-import logging
 from http import HTTPStatus
 from urllib.parse import urlparse
 from singer_sdk.authenticators import BasicAuthenticator
@@ -181,7 +180,11 @@ class PagedFreshdeskStream(FreshdeskStream):
         if next_page_token:
             params["page"] = next_page_token
         if "updated_since" not in context:
-            params["updated_since"] = self.get_starting_timestamp(context)
+            updated_since = self.get_starting_timestamp(context)
+            if isinstance(updated_since, datetime.datetime):
+                # Convert to ISO 8601 string with 'Z' for UTC
+                updated_since = updated_since.strftime("%Y-%m-%dT%H:%M:%SZ")
+            params["updated_since"] = updated_since
         return params
 
     def get_new_paginator(self) -> BasePageNumberPaginator:
