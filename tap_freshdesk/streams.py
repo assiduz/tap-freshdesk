@@ -14,7 +14,7 @@ from tap_freshdesk.client import FreshdeskStream, PagedFreshdeskStream
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
 
-class AgentsStream(PagedFreshdeskStream):
+class AgentsStream(FreshdeskStream):
     name = "agents"
 
 class CompaniesStream(PagedFreshdeskStream):
