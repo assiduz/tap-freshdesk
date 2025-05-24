@@ -177,6 +177,7 @@ class PagedFreshdeskStream(FreshdeskStream):
         context = context or {}
         params = super().get_url_params(context, next_page_token)
         params["per_page"] = 100
+        params['order_type'] = "asc"
         if next_page_token:
             params["page"] = next_page_token
         if "updated_since" not in context:
