@@ -17,9 +17,8 @@ SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 class AgentsStream(FreshdeskStream):
     name = "agents"
 
-class CompaniesStream(PagedFreshdeskStream):
+class CompaniesStream(FreshdeskStream):
     name = "companies"
-    replication_key = "updated_at"
 
 class TicketFieldsStream(FreshdeskStream):
     name = "ticket_fields"
@@ -58,6 +57,7 @@ class TicketsStream(PagedFreshdeskStream):
         context = context or {}
         params = super().get_url_params(context, next_page_token)
         params["per_page"] = 100
+        params["order_by"] = "created_at"
         params['order_type'] = "asc"
         if next_page_token:
             params["page"] = next_page_token
