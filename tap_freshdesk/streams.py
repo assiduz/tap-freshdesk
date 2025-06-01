@@ -38,7 +38,7 @@ class SlaPoliciesStream(FreshdeskStream):
 
 class TicketsStream(PagedFreshdeskStream):
     name = "tickets"
-    replication_key = 'updated_at'
+    replication_key = 'created_at'
 
     def get_url_params(
         self,
@@ -57,7 +57,7 @@ class TicketsStream(PagedFreshdeskStream):
         context = context or {}
         params = super().get_url_params(context, next_page_token)
         params["per_page"] = 100
-        params["order_by"] = "created_at"
+        params["order_by"] = "updated_at"
         params['order_type'] = "asc"
         if next_page_token:
             params["page"] = next_page_token
