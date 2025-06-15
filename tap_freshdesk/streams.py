@@ -14,10 +14,10 @@ from tap_freshdesk.client import FreshdeskStream, PagedFreshdeskStream
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
 
-class AgentsStream(FreshdeskStream):
+class AgentsStream(PagedFreshdeskStream):
     name = "agents"
 
-class CompaniesStream(FreshdeskStream):
+class CompaniesStream(PagedFreshdeskStream):
     name = "companies"
 
 class TicketFieldsStream(FreshdeskStream):
@@ -30,10 +30,10 @@ class ContactsStream(PagedFreshdeskStream):
     name = "contacts"
     replication_key = 'updated_at'
 
-class EmailConfigsStream(FreshdeskStream):
+class EmailConfigsStream(PagedFreshdeskStream):
     name = "email_configs"
 
-class SlaPoliciesStream(FreshdeskStream):
+class SlaPoliciesStream(PagedFreshdeskStream):
     name = "sla_policies"
 
 class TicketsStream(PagedFreshdeskStream):
