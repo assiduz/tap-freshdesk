@@ -78,6 +78,7 @@ class Tapfreshdesk(Tap):
             streams.GroupsStream(self),
             streams.ContactsStream(self),
             streams.TicketsStream(self),
+            streams.ConversationsStream(self),
             streams.EmailConfigsStream(self),
             streams.SlaPoliciesStream(self),
         ]

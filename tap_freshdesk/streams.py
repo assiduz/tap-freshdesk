@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-import copy
 import datetime
-
+from pathlib import Path
 from singer_sdk import typing as th  # JSON Schema typing helpers
-from singer_sdk import Tap, metrics
-
 from tap_freshdesk.client import FreshdeskStream, PagedFreshdeskStream
+
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
@@ -71,4 +68,37 @@ class TicketsStream(PagedFreshdeskStream):
         embed_fields = embeds.get("tickets", [])
         if embed_fields:
             params["include"] = ",".join(embed_fields)
+        return params
+
+    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+        # Pass ticket_id from this ticket record to child stream context
+        return {"ticket_id": record["id"]}
+
+class ConversationsStream(PagedFreshdeskStream):
+
+    name = "conversations"
+    primary_keys = ["id", "ticket_id"]
+    replication_key = "updated_at"
+
+    # EpicIssues streams should be invoked once per parent epic:
+    parent_stream_type = TicketsStream
+    ignore_parent_replication_keys = True
+
+    # Path is auto-populated using parent context keys:
+    path = "/tickets/{ticket_id}/conversations"
+
+    state_partitioning_keys = []
+    
+    def get_url_params(self, context: Optional[dict], next_page_token: Optional[int]) -> dict:
+        # Override to avoid propagating all query string params from the parent stream,
+        # as the child stream's endpoint does not support them.
+        # Explicitly specify only the params supported by this stream 
+        # which are pagination and page size.
+        params = {
+            "per_page": 100  # always request 100 items per page
+        }
+        if next_page_token:
+            params["page"] = next_page_token
+        else:
+            params["page"] = 1  # start with page 1 if no token provided
         return params
