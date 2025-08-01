@@ -71,6 +71,7 @@ class Tapfreshdesk(Tap):
         Returns:
             A list of discovered streams.
         """
+       
         return [
             streams.AgentsStream(self),
             streams.CompaniesStream(self),
@@ -78,10 +79,11 @@ class Tapfreshdesk(Tap):
             streams.GroupsStream(self),
             streams.ContactsStream(self),
             streams.TicketsStream(self),
-            streams.ConversationsStream(self),
+            streams.TicketsConversationsStream(self),
             streams.EmailConfigsStream(self),
             streams.SlaPoliciesStream(self),
         ]
+
 
 if __name__ == "__main__":
     Tapfreshdesk(config=config).cli()
